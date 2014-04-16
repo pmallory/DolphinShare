@@ -35,9 +35,17 @@ def express_interest(socket):
     data = socket.recv(BUFFER_SIZE)
     return data
 
+def request(socket):
+    m = struct.pack("!iBiii", 13, 6, 0, 0, 2**14) #TODO get from metainf
+    socket.send(m)
+    time.sleep(.1)
+    data = socket.recv(BUFFER_SIZE)
+    return data
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((IP, PORT))
 print send_handshake(s)
 print unchoke(s)
 print express_interest(s)
+print request(s)
 s.close()
