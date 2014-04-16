@@ -15,13 +15,29 @@ PORT = 58220
 BUFFER_SIZE = 1024
 MESSAGE = "\x13BitTorrent protocol" + struct.pack("!8x20s20s", infohash, os.urandom(20))
 
-def send_handshake():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((IP, PORT))
-    s.send(MESSAGE)
-    time.sleep(5)
-    data = s.recv(BUFFER_SIZE)
-    s.close()
+def send_handshake(socket):
+    socket.send(MESSAGE)
+    time.sleep(.1)
+    data = socket.recv(BUFFER_SIZE)
     return data
 
-print send_handshake()
+def unchoke(socket):
+    m = struct.pack("!iB", 1, 1)
+    socket.send(m)
+    time.sleep(.1)
+    data = socket.recv(BUFFER_SIZE)
+    return data
+
+def express_interest(socket):
+    m = struct.pack("!iB", 1, 2)
+    socket.send(m)
+    time.sleep(.1)
+    data = socket.recv(BUFFER_SIZE)
+    return data
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((IP, PORT))
+print send_handshake(s)
+print unchoke(s)
+print express_interest(s)
+s.close()
