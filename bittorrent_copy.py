@@ -5,15 +5,20 @@ import os
 import bencode
 import hashlib
 import socket
+import argparse
 
-torrent = input('Enter name of torrent (enclosed within single quotes): ')
-torrent += '.torrent'
+parser =  argparse.ArgumentParser()
+parser.add_argument('torrent')
+parser.add_argument('IP')
+parser.add_argument('Port', type=int)
+args = parser.parse_args()
+
+torrent = args.torrent
 metainf = bencode.bdecode(open(torrent, 'rb').read())
 infostring = bencode.bencode(metainf.get('info'))
 infohash = hashlib.sha1(infostring).digest()
-IP = input("Enter IP (enclosed within single quotes): ")
-'''IP = '127.0.0.1' '''
-PORT = input("Enter PORT #: ")
+IP = args.IP
+PORT = args.Port
 BUFFER_SIZE = 1024
 MESSAGE = "\x13BitTorrent protocol" + struct.pack("!8x20s20s", infohash, os.urandom(20))
 BLOCK_SIZE = 2**14
