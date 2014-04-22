@@ -43,17 +43,21 @@ def express_interest(socket):
     return data
 
 def request(socket, piece_number, block_offset):
-    m = struct.pack("!iBiii", 13, 6, piece_number, block_offset, BLOCK_SIZE)
-    socket.send(m)
+    expected = BLOCK_SIZE
 
+    if piece_number == NUM_PIECES and BLOCK_SIZE >= metainf.get('info').get('piece length'):
+       expected = (metainf.get('info').get('length') - (NUM_PIECES * metainf.get('info').get('piece length')))
+       print 'expected block size: {}'.format(expected)
+    m = struct.pack("!iBiii", 13, 6, piece_number, block_offset, expected)
     while(True):
-        data = socket.recv(BLOCK_SIZE+13)
+        socket.send(m)
+        data = socket.recv(expected+13)
         if len(data)<13:
             continue
         header = data[:13]
         parsed_header = struct.unpack('!iBii', header)
         if (parsed_header[1] == 7 and 
-        len(data[13:]) == BLOCK_SIZE and 
+        (len(data[13:]) == BLOCK_SIZE or len(data[13:]) == expected) and 
         piece_number <= NUM_PIECES and 
         parsed_header[2] == piece_number and 
         parsed_header[3] == block_offset):
@@ -72,7 +76,6 @@ def request(socket, piece_number, block_offset):
     payload = data[13:]
     print('size of payload: {}'.format(len(payload)))
     print('\n\n')
-
     return payload
 
 def get_piece(socket, piece_number):
@@ -80,7 +83,7 @@ def get_piece(socket, piece_number):
     piece_in_progress = b''
     while(True):
 	    if piece_number == NUM_PIECES:
-	       block_count = (metainf.get('info').get('length') - ((NUM_PIECES - 1) * metainf.get('info').get('piece_length')))/BLOCK_SIZE
+	       block_count = (metainf.get('info').get('length') - ((NUM_PIECES - 1) * metainf.get('info').get('piece length')))/BLOCK_SIZE
 	    for block_number in xrange(block_count):
 		piece_in_progress += request(socket, piece_number, block_number*BLOCK_SIZE)
 	    
